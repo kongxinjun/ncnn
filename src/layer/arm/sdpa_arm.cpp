@@ -271,6 +271,34 @@ int SDPA_arm::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& to
         const float _scale = scale == 0.f ? 1.f / sqrtf(embed_dim) : scale;
         return sdpa_prefill<float, float>(query, key, value, attn_mask_blob, top_blob, _scale, opt);
     }
+
+#if NCNN_ARM82
+    // with fp16 arithmetic the existing path runs fp16 gemm, which is faster than the fp32 kernels here
+    if (fp16 && src_seqlen > 1 && !opt.use_fp16_arithmetic)
+    {
+        Mat& top_blob = top_blobs[0];
+        top_blob.create(out_embed_dim, src_seqlen, num_heads, 2u, opt.blob_allocator);
+        if (top_blob.empty())
+            return -100;
+
+        const float _scale = scale == 0.f ? 1.f / sqrtf(embed_dim) : scale;
+        return forward_prefill_fp16s(query, key, value, attn_mask_blob, top_blob, _scale, opt);
+    }
+#endif
+
+#if NCNN_BF16
+    if (bf16 && src_seqlen > 1)
+    {
+        // bf16 storage writes fp32 output, like the existing path
+        Mat& top_blob = top_blobs[0];
+        top_blob.create(out_embed_dim, src_seqlen, num_heads, 4u, opt.blob_allocator);
+        if (top_blob.empty())
+            return -100;
+
+        const float _scale = scale == 0.f ? 1.f / sqrtf(embed_dim) : scale;
+        return sdpa_prefill<unsigned short, float>(query, key, value, attn_mask_blob, top_blob, _scale, opt);
+    }
+#endif
 #endif
 
     if (fp32 && src_seqlen == 1)

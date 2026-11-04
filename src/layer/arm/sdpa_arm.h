@@ -21,6 +21,9 @@ public:
 protected:
 #if NCNN_ARM82
     int forward_decode_fp16s(const Mat& query, const Mat& key, const Mat& value, const Mat& attn_mask_blob, Mat& top_blob, float scale, const Option& opt) const;
+#if __aarch64__
+    int forward_prefill_fp16s(const Mat& query, const Mat& key, const Mat& value, const Mat& attn_mask_blob, Mat& top_blob, float scale, const Option& opt) const;
+#endif
 #endif
 
 public:
