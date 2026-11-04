@@ -38,6 +38,7 @@ static inline float32x4_t sdpa_load4_dup(const unsigned short* p)
 #endif // NCNN_BF16
 
 #include "sdpa_decode.h"
+#include "sdpa_prefill.h"
 
 SDPA_arm::SDPA_arm()
 {
@@ -258,6 +259,19 @@ int SDPA_arm::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& to
         key = cur_key;
         value = cur_value;
     }
+
+#if __aarch64__
+    if (fp32 && src_seqlen > 1)
+    {
+        Mat& top_blob = top_blobs[0];
+        top_blob.create(out_embed_dim, src_seqlen, num_heads, 4u, opt.blob_allocator);
+        if (top_blob.empty())
+            return -100;
+
+        const float _scale = scale == 0.f ? 1.f / sqrtf(embed_dim) : scale;
+        return sdpa_prefill<float, float>(query, key, value, attn_mask_blob, top_blob, _scale, opt);
+    }
+#endif
 
     if (fp32 && src_seqlen == 1)
     {
