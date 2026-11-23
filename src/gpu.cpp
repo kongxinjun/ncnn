@@ -1301,6 +1301,12 @@ void GpuInfoPrivate::query_extension_features()
 
     if (physicalDeviceProperties.vendorID == 0x1002)
     {
+        // TEST ONLY: no cooperative matrix on any amd
+        queryCooperativeMatrixFeatures.cooperativeMatrix = VK_FALSE;
+        queryCooperativeMatrixFeaturesNV.cooperativeMatrix = VK_FALSE;
+    }
+    if (physicalDeviceProperties.vendorID == 0x1002)
+    {
         // emulated cooperative matrix on amd rdna2 is slow
         switch (physicalDeviceProperties.deviceID)
         {
