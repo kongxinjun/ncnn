@@ -2747,6 +2747,9 @@ void GpuInfo::get_optimal_cooperative_matrix_mnk(int M, int N, int K, VkComponen
     coopmat_N = 0;
     coopmat_K = 0;
     coopmat_subgroup_size = d->querySubgroupProperties.subgroupSize;
+    // TEST ONLY: fp32 accumulator on amd
+    if (d->physicalDeviceProperties.vendorID == 0x1002 && acctype == VK_COMPONENT_TYPE_FLOAT16_KHR)
+        acctype = VK_COMPONENT_TYPE_FLOAT32_KHR;
     coopmat_acctype = acctype;
 
     // collect mnk and subgroup size candidates
