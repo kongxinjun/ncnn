@@ -491,7 +491,7 @@ static int sdpa_decode_bf16s(const Mat& query, const Mat& key, const Mat& value,
     const int block_q = sdpa_decode_get_optimal_tile_q(num_query_heads_per_kv_head);
     const int num_qblocks = (num_query_heads_per_kv_head + block_q - 1) / block_q;
     const int num_tasks = num_kv_heads * num_qblocks;
-    const int nT = std::min(std::max(opt.num_threads, 1), num_tasks);
+    const int nT = std::max(opt.num_threads, 1);
     const int block_n = sdpa_decode_get_optimal_tile_n(query.w, value_dim, key_seqlen, 2, 2, 2, attn_mask_blob.empty() ? 0 : 2, block_q);
 
     const bool pack_query = block_q >= 4;
@@ -1709,7 +1709,7 @@ static int sdpa_decode_kvcache_bf16s(const Mat& query, const Mat& key_cache, con
 #endif
     const int num_qblocks = (num_query_heads_per_kv_head + block_q - 1) / block_q;
     const int num_tasks = num_kv_heads * num_qblocks;
-    const int nT = std::min(std::max(opt.num_threads, 1), num_tasks);
+    const int nT = std::max(opt.num_threads, 1);
     int block_n = sdpa_decode_get_optimal_tile_n(head_dim, value_dim, key_seqlen, 2, 2, 2, attn_mask_blob.empty() ? 0 : 2, block_q);
     block_n = std::max(NR, (block_n + NR - 1) / NR * NR);
 
